@@ -11,7 +11,6 @@ scheduler.o: scheduler.c scheduler.h
 	gcc -c scheduler.c
 
 clean:
-	rm a.out
 	rm sched
 	rm main.o
 	rm scheduler.o
