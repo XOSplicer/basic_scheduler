@@ -1,2 +1,4 @@
 a.out
 sched
+main.o
+scheduler.o
