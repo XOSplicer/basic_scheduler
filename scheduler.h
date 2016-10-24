@@ -8,7 +8,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 
 typedef struct proc {
@@ -22,6 +25,6 @@ pid_t sched_create_process(void (*task)(void));
 
 void sched_kill_process(pid_t pid);
 
-//void sched_join_process(pid_t pid);
+void sched_join_process(pid_t pid);
 
 #endif /* SCHED_H */

@@ -4,33 +4,34 @@
 #include "scheduler.h"
 
 void task1(void) {
-  while(1) {
-    printf("Task 1\n");
+  for (size_t i = 0; i < 100; i++) {
+    printf("Task 1: %lu\n", i);
     usleep(1000);
   }
 }
 
 void task2(void) {
-  while(1) {
-    printf("Task 2\n");
+  for (size_t i = 0; i < 100; i++) {
+    printf("Task 2: %lu\n", i);
     usleep(1000);
   }
 }
 
 void task3(void) {
-  while(1) {
-    printf("Task 3\n");
+  for (size_t i = 0; i < 100; i++) {
+    printf("Task 3: %lu\n", i);
     usleep(1000);
   }
 }
 
 int main(int argc, char const *argv[]) {
+  pid_t t1, t2, t3;
   sched_init();
-  sched_create_process(task1);
-  sched_create_process(task2);
-  sched_create_process(task3);
-  while (1) {
-
-  }
+  t1 = sched_create_process(task1);
+  t2 = sched_create_process(task2);
+  t3 = sched_create_process(task3);
+  sched_join_process(t1);
+  sched_join_process(t2);
+  sched_join_process(t3);
   return 0;
 }
