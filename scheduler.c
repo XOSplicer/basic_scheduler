@@ -189,4 +189,5 @@ void sched_join_process(pid_t pid) {
   pid_t p;
   int status;
   p = waitpid(pid, &status, 0); /* wait for child to terminate */
+  remove_proc(pid);
 }
