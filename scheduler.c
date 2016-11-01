@@ -5,7 +5,7 @@ proc_t *first_proc;
 proc_t *last_proc;
 proc_t *paused;
 
-proc_t *pop_proc_queue() {
+proc_t* pop_proc_queue() {
   if(!first_proc) {
     /* empty queue */
     fprintf(stderr,"No member in queue!\n");
@@ -36,6 +36,10 @@ void append_proc_queue(proc_t* proc) {
 }
 
 void remove_proc(pid_t pid) {
+
+  proc_t *p;
+  proc_t *last;
+
   if(curr_proc) {
     /* see if the process is currenly running */
     if(curr_proc->pid == pid) {
@@ -54,8 +58,8 @@ void remove_proc(pid_t pid) {
       }
     } else {
       /* more than one element */
-      proc_t *p = first_proc;
-      proc_t *last = first_proc;
+      p = first_proc;
+      last = first_proc;
       while (p) {
         if(p->pid == pid) {
           if(p == first_proc) {
@@ -78,20 +82,112 @@ void remove_proc(pid_t pid) {
       }
     }
   }
-  //TODO also remove from paused
+
+  // also remove from paused
+
+  if(paused) {
+    p = paused;
+    last = paused;
+    while(p) {
+      if(p->pid == pid) {
+        if(p == paused) {
+          /* first, but not only element */
+          paused = paused->next;
+          free(p);
+        } else if(p->next == NULL) {
+          /*last, but not only element */
+          last->next = NULL;
+          free(p);
+          break;
+        } else {
+          /* middle, but not only element */
+          last->next = p->next;
+          free(p);
+        }
+      }
+      last = p;
+      p = p->next;
+    }
+  }
 }
 
-proc_t retrieve_proc_queue(pid_t pid) {
-  //TODO
+proc_t* retrieve_proc_queue(pid_t pid) {
+  proc_t *p = first_proc;
+  proc_t *last = first_proc;
+  if(first_proc) {
+    if(first_proc == last_proc) {
+      /* only one element */
+      if(first_proc->pid == pid) {
+
+        first_proc = NULL;
+        last_proc = NULL;
+        return p;
+      }
+    } else {
+      /* more than one element */
+      p = first_proc;
+      last = first_proc;
+      while (p) {
+        if(p->pid == pid) {
+          if(p == first_proc) {
+            /* first, but not only element */
+            first_proc = first_proc->next;
+            return p;
+          } else if(p == last_proc) {
+            /*last, but not only element */
+            last->next = NULL;
+            return p;
+            break;
+          } else {
+            /* middle, but not only element */
+            last->next = p->next;
+            return p;
+          }
+        }
+        last = p;
+        p = p->next;
+      }
+    }
+  }
 }
 
 
-void insert_paused(proc_t *proc) {
-  //TODO
+void insert_paused(proc_t *p) {
+  if(!p) {
+    return;
+  }
+  if(!paused) {
+    paused = p;
+    p->next = NULL;
+  } else {
+    p->next = paused;
+    paused = p;
+  }
 }
 
 proc_t* retrieve_paused(pid_t pid) {
-  //TODO
+  proc_t *p = paused;
+  proc_t *last = paused;
+  while(p) {
+    if(p->pid == pid) {
+      if(p == paused) {
+        /* first, but not only element */
+        paused = paused->next;
+        return p;
+      } else if(p->next == NULL) {
+        /*last, but not only element */
+        last->next = NULL;
+        return p;
+        break;
+      } else {
+        /* middle, but not only element */
+        last->next = p->next;
+        return p;
+      }
+    }
+    last = p;
+    p = p->next;
+  }
 }
 
 
@@ -206,13 +302,49 @@ void sched_join_process(pid_t pid) {
   pid_t p;
   int status;
   p = waitpid(pid, &status, 0); /* wait for child to terminate */
+  if(p > 0) {
+    printf("Child with pid %d finished while joining on it!\n", p);
+  }
   remove_proc(pid);
 }
 
 void sched_pause_process(pid_t pid) {
-  //TODO
+  proc_t* p;
+  int k;
+  if(pid>0) {
+    if(curr_proc && curr_proc->pid == pid) {
+      k = kill(curr_proc->pid, SIGSTOP);
+      if(k == -1) {
+        fprintf(stderr, "Scheduler: %s\n", strerror(errno));
+      }
+      p = curr_proc;
+      curr_proc = NULL;
+      insert_paused(p);
+      sigalrm_handler(14);
+    } else {
+      k = kill(curr_proc->pid, SIGSTOP);
+      if(k == -1) {
+        fprintf(stderr, "Scheduler: %s\n", strerror(errno));
+      }
+      p = retrieve_proc_queue(pid);
+      insert_paused(p);
+    }
+
+  }
+
 }
 
 void sched_continue_process(pid_t pid) {
-  //TODO
+  proc_t* p;
+  if(pid > 0) {
+    p = retrieve_paused(pid);
+    if(!curr_proc) {
+      curr_proc = p;
+      curr_proc->next = NULL;
+      kill(curr_proc->pid, SIGCONT); /* continue the process */
+    } else {
+      append_proc_queue(p);
+      /* process is now enqueued and will be executed */
+    }
+  }
 }

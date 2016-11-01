@@ -30,8 +30,12 @@ int main(int argc, char const *argv[]) {
   t1 = sched_create_process(task1);
   t2 = sched_create_process(task2);
   t3 = sched_create_process(task3);
+  usleep(10000);
+  //sched_pause_process(t2);
+  //sched_kill_process(t3);
   sched_join_process(t1);
+  //sched_continue_process(t2);
   sched_join_process(t2);
-  sched_join_process(t3);
+
   return 0;
 }
