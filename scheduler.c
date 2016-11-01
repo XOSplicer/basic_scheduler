@@ -3,6 +3,7 @@
 proc_t *curr_proc;
 proc_t *first_proc;
 proc_t *last_proc;
+proc_t *paused;
 
 proc_t *pop_proc_queue() {
   if(!first_proc) {
@@ -77,8 +78,22 @@ void remove_proc(pid_t pid) {
       }
     }
   }
-
+  //TODO also remove from paused
 }
+
+proc_t retrieve_proc_queue(pid_t pid) {
+  //TODO
+}
+
+
+void insert_paused(proc_t *proc) {
+  //TODO
+}
+
+proc_t* retrieve_paused(pid_t pid) {
+  //TODO
+}
+
 
 void sigalrm_handler(int sig) {
   printf("Scheduler called by interrupt!\n");
@@ -113,9 +128,10 @@ void sigalrm_handler(int sig) {
 void sigchld_handler(int sig)
 {
 
-    //TODO find out when a child terminates and remove it from the list;
+    /* find out when a child terminates and remove it from the list */
     pid_t p;
     int status;
+    /* non blocking */
     while ((p=waitpid(-1, &status, WNOHANG)) != -1)
     {
        /* Handle the death of pid p */
@@ -134,6 +150,7 @@ void sched_init(void) {
   curr_proc   = NULL;
   first_proc  = NULL;
   last_proc   = NULL;
+  paused      = NULL;
 
   /* register handler to be called
   when a child process dies */
@@ -190,4 +207,12 @@ void sched_join_process(pid_t pid) {
   int status;
   p = waitpid(pid, &status, 0); /* wait for child to terminate */
   remove_proc(pid);
+}
+
+void sched_pause_process(pid_t pid) {
+  //TODO
+}
+
+void sched_continue_process(pid_t pid) {
+  //TODO
 }

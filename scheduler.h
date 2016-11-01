@@ -27,4 +27,8 @@ void sched_kill_process(pid_t pid);
 
 void sched_join_process(pid_t pid);
 
+void sched_pause_process(pid_t pid);
+
+void sched_continue_process(pid_t pid);
+
 #endif /* SCHED_H */
