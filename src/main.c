@@ -1,8 +1,14 @@
-#include <stdlib.h>
+/**
+ * File: main.c
+ * Author: Felix Stegmaier
+ * Created on: 04.11.2016
+ */
+
 #include <stdio.h>
+#include "../h/tests.h"
 
-#include "scheduler.h"
 
+/*
 void task1(void) {
   for (size_t i = 0; i < 100; i++) {
     printf("Task 1: %lu\n", i);
@@ -23,9 +29,10 @@ void task3(void) {
     usleep(1000);
   }
 }
+*/
 
 int main(int argc, char const *argv[]) {
-  pid_t t1, t2, t3;
+  /*pid_t t1, t2, t3;
   sched_init();
   t1 = sched_create_process(task1);
   t2 = sched_create_process(task2);
@@ -36,6 +43,9 @@ int main(int argc, char const *argv[]) {
   sched_join_process(t1);
   //sched_continue_process(t2);
   sched_join_process(t2);
+  */
+
+  printf("Hello, world!\n");
 
   return 0;
 }

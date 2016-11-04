@@ -1,4 +1,10 @@
-#include "scheduler.h"
+/**
+ * File: scheduler.c
+ * Author: Felix Stegmaier
+ * Created on: 04.11.2016
+ */
+
+#include "../h/scheduler.h"
 
 proc_t *curr_proc;
 proc_t *first_proc;
