@@ -9,6 +9,7 @@
 
 int main(int argc, char const *argv[]) {
   void (*tests[TESTS_NUMBER])(void) = {test1, test2, test3, test4};
+  sched_init();
   for (size_t i = 0; i < TESTS_NUMBER; i++) {
     printf("===============================\nExecuting test %lu\n===============================\n", i+1);
     tests[i]();

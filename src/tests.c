@@ -35,7 +35,7 @@ void task4(void) {
 }
 
 void test1(void) {
-
+  task1();
 }
 
 void test2(void) {
@@ -47,5 +47,5 @@ void test3(void) {
 }
 
 void test4(void) {
-  
+
 }
