@@ -5,6 +5,7 @@
  *
  * Testcases for the scheduler that will be
  * executed by the main prorgam.
+ * Before the tests are executed, the main program will initialize the scheduler.
  *
  */
 
@@ -26,7 +27,6 @@
  void task1(void);
  void task2(void);
  void task3(void);
- void task4(void);
 
  /**
   * [test1 description]

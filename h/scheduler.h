@@ -46,7 +46,7 @@ void sched_init(void);
  *
  * @param task : a function reference with
  *               void parameters and void return value,
- *               may be null, bun nothing happens.
+ *               may be null, but nothing happens.
  *
  * @return the pid of the created process,
  *         0 if @param task was null

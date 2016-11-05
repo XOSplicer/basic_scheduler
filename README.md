@@ -15,8 +15,8 @@ Clean the projects `build` folder by running `make clean`.
 1. Requirement
 --------------
 This project is part of my Operating Systems I lecture.  
-The literal task was to write a "basic process scheduler."  
-What was meant by this is, that I should write a program
+The literal exercise was to write a "basic process scheduler."  
+What was meant by this is that I should write a program
 that demonstrates how to create processes and schedule them,
 so that only one process is active at a time and the processes
 still appear as to be pseudo-parallel, i.e. they run in alternation.
@@ -35,10 +35,12 @@ scheduled by the scheduler and perform different actions on them
 Each of these tasks runs in pseudo-parallel and counts up a variable
 which it outputs to the console.
 
-1.
-2.
-3.
-4.
+1. Create 3 processes and join with them.
+2. Create 3 processes, pause one of them, join with the other two, continue the former and join it.
+3. Create 3 processes, pause one, kill another one, continue the former and wait for all living processes to finish.
+4. Create 3 processes, kill all of them.
+
+The test cases are chosen, so that all functionalities in various orders are covered. 
 
 
 

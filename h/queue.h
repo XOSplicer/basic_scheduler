@@ -11,7 +11,17 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "scheduler.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+
+/* used to handle processes */
+typedef struct proc {
+  pid_t pid;
+  struct proc *next; /* used to build queues */
+} proc_t;
 
 /* used to handle a queue */
 typedef struct queue {
