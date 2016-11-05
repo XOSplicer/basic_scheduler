@@ -26,12 +26,6 @@
 #include "queue.h"
 
 
-/* used to handle processes */
-typedef struct proc {
-  pid_t pid;
-  struct proc *next; /* used to build queues */
-} proc_t;
-
 /**
  * Initiate the scheduler
  * Must be called before any process can be created.
