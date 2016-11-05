@@ -47,12 +47,48 @@ pid_t sched_create_process(void (*task)(void)) {
     return -1;
   }
 
-  return 0;
+  if(!task) {
+    return 0;
+  }
+
+  /* create a new process */
+  pid_t pid = fork();
+
+  if(pid < 0) {
+    fprintf(stderr, "Could not create process!\n");
+    return -2;
+
+  } else if(pid == 0) {
+    /* child process */
+
+    (*task)();
+    exit(0); /*do not return, as the process is done*/
+
+  } else {
+    /* patrent process */
+
+    kill(pid, SIGSTOP); /* suspend the new process */
+
+    /* create handeling node */
+    proc_t *new_proc = malloc(sizeof(proc_t));
+    new_proc->pid = pid;
+
+    /* enqueue the process to be active */
+    q_enqueue(active_q, new_proc);
+
+    return pid;
+
+  }
+
 }
 
 void sched_kill_process(pid_t pid) {
 
   if(!initiated) {
+    return;
+  }
+
+  if(pid <= 0) {
     return;
   }
 
@@ -64,6 +100,11 @@ void sched_join_process(pid_t pid) {
   if(!initiated) {
     return;
   }
+
+  if(pid <= 0) {
+    return;
+  }
+
 }
 
 
@@ -73,12 +114,20 @@ void sched_pause_process(pid_t pid) {
     return;
   }
 
+  if(pid <= 0) {
+    return;
+  }
+
 }
 
 
 void sched_continue_process(pid_t pid) {
 
   if(!initiated) {
+    return;
+  }
+
+  if(pid <= 0) {
     return;
   }
 

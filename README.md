@@ -2,6 +2,7 @@ A basic process scheduler example for Linux
 ===========================================
 Written by Felix Stegmaier
 
+
 0. tl;dr
 --------
 This is a simple process scheduler for Linux
@@ -10,6 +11,7 @@ using a round robin algorithm.
 
 Build with project by executing `make` in the main folder.  
 Start the example program by executing `main`.  
+
 
 1. Requirement
 --------------
@@ -23,7 +25,6 @@ still appear as to be pseudo-parallel, i.e. they run in alternation.
 
 2. Specification
 ----------------
-
 
 
 3. Testing
@@ -41,7 +42,6 @@ which it outputs to the console.
 4. Create 3 processes, kill all of them.
 
 The test cases are chosen, so that all functionalities in various orders are covered.
-
 
 
 4. Running
