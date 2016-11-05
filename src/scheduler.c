@@ -6,8 +6,29 @@
 
 #include "../h/scheduler.h"
 
-void sched_init(void) {
+/**** PRIVATE DECLARATION *****/
 
+proc_t *curr_proc;
+queue_t *active_q;
+queue_t *paused_q;
+
+void sigalrm_handler(int sig);
+void sigchld_handler(int sig);
+
+/******** PUBLIC *********/
+
+void sched_init(void) {
+  /* initiate proces lists to be empty */
+  curr_proc = NULL;
+  active_q = q_create();
+  paused_q = q_create();
+
+  /* register handler to be called when a child process dies */
+  signal(SIGCHLD, sigchld_handler);
+
+  /* register handler to be called whenever a QUANTUM is over */
+  signal(SIGALRM, sigalrm_handler);
+  ualarm(QUANTUM, QUANTUM);
 }
 
 pid_t sched_create_process(void (*task)(void)) {
@@ -34,6 +55,23 @@ void sched_continue_process(pid_t pid) {
 }
 
 
+/******** PRIVATE*********/
+
+/**
+ * [sigalrm_handler description]
+ * @param sig [description]
+ */
+void sigalrm_handler(int sig) {
+  printf("Scheduler called by alarm signal!\n");
+}
+
+/**
+ * [sigchld_handler description]
+ * @param sig [description]
+ */
+void sigchld_handler(int sig) {
+
+}
 
 
 //

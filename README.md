@@ -9,7 +9,7 @@ that executes multiple processes pseudo-simultaneously
 using a round robin algorithm.
 
 Build with project by executing `make` in the main folder.  
-Start the example program by executing `build/main`.  
+Start the example program by executing `main`.  
 
 1. Requirement
 --------------
@@ -23,6 +23,7 @@ still appear as to be pseudo-parallel, i.e. they run in alternation.
 
 2. Specification
 ----------------
+
 
 
 3. Testing
