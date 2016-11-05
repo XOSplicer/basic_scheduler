@@ -44,6 +44,7 @@ void sched_init(void);
  *
  * @return the pid of the created process,
  *         0 if @param task was null
+ *         -1 if scheduler has not been initiated
  */
 pid_t sched_create_process(void (*task)(void));
 

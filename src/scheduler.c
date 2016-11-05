@@ -12,12 +12,20 @@ proc_t *curr_proc;
 queue_t *active_q;
 queue_t *paused_q;
 
+int initiated = 0;
+
 void sigalrm_handler(int sig);
 void sigchld_handler(int sig);
 
 /******** PUBLIC *********/
 
 void sched_init(void) {
+
+  /* do nothing on multiple calls */
+  if(initiated) {
+    return;
+  }
+
   /* initiate proces lists to be empty */
   curr_proc = NULL;
   active_q = q_create();
@@ -29,28 +37,50 @@ void sched_init(void) {
   /* register handler to be called whenever a QUANTUM is over */
   signal(SIGALRM, sigalrm_handler);
   ualarm(QUANTUM, QUANTUM);
+
+  initiated = 1;
 }
 
 pid_t sched_create_process(void (*task)(void)) {
+
+  if(!initiated) {
+    return -1;
+  }
+
   return 0;
 }
 
 void sched_kill_process(pid_t pid) {
+
+  if(!initiated) {
+    return;
+  }
 
 }
 
 
 void sched_join_process(pid_t pid) {
 
+  if(!initiated) {
+    return;
+  }
 }
 
 
 void sched_pause_process(pid_t pid) {
 
+  if(!initiated) {
+    return;
+  }
+
 }
 
 
 void sched_continue_process(pid_t pid) {
+
+  if(!initiated) {
+    return;
+  }
 
 }
 
