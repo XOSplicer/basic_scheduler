@@ -10,7 +10,6 @@ using a round robin algorithm.
 
 Build with project by executing `make` in the main folder.  
 Start the example program by executing `build/main`.  
-Clean the projects `build` folder by running `make clean`.
 
 1. Requirement
 --------------
@@ -40,7 +39,7 @@ which it outputs to the console.
 3. Create 3 processes, pause one, kill another one, continue the former and wait for all living processes to finish.
 4. Create 3 processes, kill all of them.
 
-The test cases are chosen, so that all functionalities in various orders are covered. 
+The test cases are chosen, so that all functionalities in various orders are covered.
 
 
 

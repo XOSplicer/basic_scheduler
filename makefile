@@ -7,6 +7,7 @@ all: main tests.o
 
 main: main.o tests.o scheduler.o queue.o
 	gcc -o $(BUILD_DIR)/main $(BUILD_DIR)/main.o $(BUILD_DIR)/tests.o $(BUILD_DIR)/scheduler.o $(BUILD_DIR)/queue.o
+	cp $(BUILD_DIR)/main main
 
 main.o: $(SRC_DIR)/main.c
 	gcc -o $(BUILD_DIR)/main.o -c $(SRC_DIR)/main.c
@@ -22,3 +23,4 @@ queue.o: $(SRC_DIR)/queue.c $(H_DIR)/queue.h
 
 clean:
 	rm build/*
+	rm main
