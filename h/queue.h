@@ -76,4 +76,13 @@ proc_t* q_dequeue(queue_t* q);
  */
 proc_t* q_search_and_dequeue(queue_t* q, pid_t pid);
 
+/**
+ * check wether q contains pid
+ * @param  q   the q to be searched in
+ * @param  pid the pid to be searched for
+ * @return     1 if an element with pid pid is contained in q
+ *             0 else
+ */
+int q_contains(queue_t* q, pid_t pid);
+
 #endif /* QUEUE_H */

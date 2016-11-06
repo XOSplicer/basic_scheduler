@@ -65,6 +65,7 @@ void sched_kill_process(pid_t pid);
  * If the pid is invalid or the process already finished
  * this will continue.
  * Will do nothing, if the scheduler has not been initialized.
+ * Will **not** make a paused process active.
  *
  * @param pid : The pid of the process to join
  */
@@ -81,7 +82,7 @@ void sched_join_process(pid_t pid);
 void sched_pause_process(pid_t pid);
 
 /**
- * Continue a previosly paused process (i.e. make it aktive again).
+ * Continue a previously paused process (i.e. make it aktive again).
  * Will do nothing if the pid is invalid or the process is already active.
  * Will do nothing, if the scheduler has not been initialized.
  *

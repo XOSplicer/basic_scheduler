@@ -12,7 +12,7 @@ proc_t *curr_proc;
 queue_t *active_q;
 queue_t *paused_q;
 
-int initiated = 0;
+int initialized = 0;
 
 void sigalrm_handler(int sig);
 void sigchld_handler(int sig);
@@ -20,9 +20,8 @@ void sigchld_handler(int sig);
 /******** PUBLIC *********/
 
 void sched_init(void) {
-
   /* do nothing on multiple calls */
-  if(initiated) {
+  if(initialized) {
     return;
   }
 
@@ -30,107 +29,142 @@ void sched_init(void) {
   curr_proc = NULL;
   active_q = q_create();
   paused_q = q_create();
-
   /* register handler to be called when a child process dies */
   signal(SIGCHLD, sigchld_handler);
-
   /* register handler to be called whenever a QUANTUM is over */
   signal(SIGALRM, sigalrm_handler);
   ualarm(QUANTUM, QUANTUM);
-
-  initiated = 1;
+  initialized = 1;
 }
 
 pid_t sched_create_process(void (*task)(void)) {
-
-  if(!initiated) {
+  if(!initialized) {
     return -1;
   }
-
   if(!task) {
     return 0;
   }
 
   /* create a new process */
   pid_t pid = fork();
-
   if(pid < 0) {
     fprintf(stderr, "Could not create process!\n");
     return -2;
-
   } else if(pid == 0) {
     /* child process */
-
     (*task)();
     exit(0); /*do not return, as the process is done*/
-
   } else {
     /* patrent process */
-
     kill(pid, SIGSTOP); /* suspend the new process */
-
     /* create handeling node */
     proc_t *new_proc = malloc(sizeof(proc_t));
     new_proc->pid = pid;
-
     /* enqueue the process to be active */
     q_enqueue(active_q, new_proc);
-
     return pid;
-
   }
-
 }
 
 void sched_kill_process(pid_t pid) {
-
-  if(!initiated) {
+  proc_t* proc;
+  if(!initialized) {
     return;
   }
-
   if(pid <= 0) {
     return;
   }
 
+  if(proc = q_search_and_dequeue(active_q, pid)) {
+    free(proc);
+    kill(pid, SIGKILL);
+  }
+  if(proc = q_search_and_dequeue(paused_q, pid)) {
+    free(proc);
+    kill(pid, SIGKILL);
+  }
+  if(curr_proc->pid == pid) {
+    free(curr_proc);
+    curr_proc = NULL;
+    kill(pid, SIGKILL);
+  }
 }
 
 
 void sched_join_process(pid_t pid) {
+  proc_t* proc;
+  pid_t p;
+  int status;
 
-  if(!initiated) {
+  if(!initialized) {
     return;
   }
-
   if(pid <= 0) {
     return;
   }
+  if(curr_proc->pid != pid
+    && !q_contains(active_q, pid)
+    && !q_contains(paused_q, pid)) {
+      return;
+  }
 
+  p = waitpid(pid, &status, 0); /* wait for child to terminate */
+  if(p > 0) {
+    printf("Child with pid %d finished while joining on it!\n", p);
+  }
+  if(proc = q_search_and_dequeue(active_q, pid)) {
+    free(proc);
+  }
+  if(proc = q_search_and_dequeue(paused_q, pid)) {
+    free(proc);
+  }
+  if(curr_proc->pid == pid) {
+    free(curr_proc);
+    curr_proc = NULL;
+  }
 }
 
 
 void sched_pause_process(pid_t pid) {
-
-  if(!initiated) {
+  proc_t* proc;
+  if(!initialized) {
     return;
   }
-
   if(pid <= 0) {
     return;
   }
+  if(q_contains(paused_q, pid)) {
+    return;
+  }
 
+  if(curr_proc->pid == pid) {
+    kill(pid, SIGSTOP);
+    q_enqueue(paused_q, curr_proc);
+    curr_proc = NULL;
+  }
+  if(proc = q_search_and_dequeue(active_q, pid)) {
+    kill(pid, SIGSTOP);
+    q_enqueue(paused_q, proc);
+  }
 }
 
 
 void sched_continue_process(pid_t pid) {
-
-  if(!initiated) {
+  proc_t* proc;
+  if(!initialized) {
     return;
   }
-
   if(pid <= 0) {
     return;
   }
+  if(curr_proc->pid == pid
+    || q_contains(active_q, pid)) {
+      return;
+  }
 
+  if(proc = q_search_and_dequeue(paused_q, pid)) {
+    q_enqueue(active_q, proc);
+  }
 }
 
 
@@ -141,7 +175,20 @@ void sched_continue_process(pid_t pid) {
  * @param sig [description]
  */
 void sigalrm_handler(int sig) {
+  int k;
   printf("Scheduler called by alarm signal!\n");
+  if(q_is_empty(active_q)) {
+    return;
+  }
+  if(curr_proc) {
+    k = kill(curr_proc->pid, SIGSTOP);
+    if(k == -1) {
+      fprintf(stderr, "Scheduler: %s\n", strerror(errno));
+    }
+    q_enqueue(active_q, curr_proc);
+  }
+  curr_proc = q_dequeue(active_q);
+  kill(curr_proc->pid, SIGCONT);
 }
 
 /**
@@ -149,356 +196,28 @@ void sigalrm_handler(int sig) {
  * @param sig [description]
  */
 void sigchld_handler(int sig) {
-
+  /* find out when a child terminates and remove it from the list */
+  pid_t p;
+  int status;
+  proc_t* proc;
+  /* non blocking */
+  while ((p=waitpid(-1, &status, WNOHANG)) != -1)
+  {
+    /* Handle the death of pid p */
+    if(p == 0) {
+      break;
+    } else if (p > 0) {
+      printf("Child with pid %d finished!\n", p);
+      if(curr_proc->pid == p) {
+        free(curr_proc);
+        curr_proc = NULL;
+      }
+      if(proc = q_search_and_dequeue(active_q, p)) {
+        free(proc);
+      }
+      if(proc = q_search_and_dequeue(paused_q, p)) {
+        free(proc);
+      }
+    }
+  }
 }
-
-
-//
-// proc_t *curr_proc;
-// proc_t *first_proc;
-// proc_t *last_proc;
-// proc_t *paused;
-//
-// proc_t* pop_proc_queue() {
-//   if(!first_proc) {
-//     /* empty queue */
-//     fprintf(stderr,"No member in queue!\n");
-//     return NULL;
-//   } else if(first_proc == last_proc) {
-//     proc_t *temp = first_proc;
-//     first_proc = NULL;
-//     last_proc = NULL;
-//     return temp;
-//   } else {
-//     proc_t *temp = first_proc;
-//     first_proc = first_proc->next;
-//     return temp;
-//   }
-// }
-//
-// void append_proc_queue(proc_t* proc) {
-//   if(!first_proc) {
-//     /* empty queue */
-//     first_proc = proc;
-//     last_proc = proc;
-//     last_proc->next = NULL;
-//   } else {
-//     last_proc->next = proc;
-//     last_proc = last_proc->next;
-//     last_proc->next = NULL;
-//   }
-// }
-//
-// void remove_proc(pid_t pid) {
-//
-//   proc_t *p;
-//   proc_t *last;
-//
-//   if(curr_proc) {
-//     /* see if the process is currenly running */
-//     if(curr_proc->pid == pid) {
-//       free(curr_proc);
-//       curr_proc = NULL;
-//     }
-//   }
-//
-//   if(first_proc) {
-//     if(first_proc == last_proc) {
-//       /* only one element */
-//       if(first_proc->pid == pid) {
-//         free(first_proc);
-//         first_proc = NULL;
-//         last_proc = NULL;
-//       }
-//     } else {
-//       /* more than one element */
-//       p = first_proc;
-//       last = first_proc;
-//       while (p) {
-//         if(p->pid == pid) {
-//           if(p == first_proc) {
-//             /* first, but not only element */
-//             first_proc = first_proc->next;
-//             free(p);
-//           } else if(p == last_proc) {
-//             /*last, but not only element */
-//             last->next = NULL;
-//             free(p);
-//             break;
-//           } else {
-//             /* middle, but not only element */
-//             last->next = p->next;
-//             free(p);
-//           }
-//         }
-//         last = p;
-//         p = p->next;
-//       }
-//     }
-//   }
-//
-//   // also remove from paused
-//
-//   if(paused) {
-//     p = paused;
-//     last = paused;
-//     while(p) {
-//       if(p->pid == pid) {
-//         if(p == paused) {
-//           /* first, but not only element */
-//           paused = paused->next;
-//           free(p);
-//         } else if(p->next == NULL) {
-//           /*last, but not only element */
-//           last->next = NULL;
-//           free(p);
-//           break;
-//         } else {
-//           /* middle, but not only element */
-//           last->next = p->next;
-//           free(p);
-//         }
-//       }
-//       last = p;
-//       p = p->next;
-//     }
-//   }
-// }
-//
-// proc_t* retrieve_proc_queue(pid_t pid) {
-//   proc_t *p = first_proc;
-//   proc_t *last = first_proc;
-//   if(first_proc) {
-//     if(first_proc == last_proc) {
-//       /* only one element */
-//       if(first_proc->pid == pid) {
-//
-//         first_proc = NULL;
-//         last_proc = NULL;
-//         return p;
-//       }
-//     } else {
-//       /* more than one element */
-//       p = first_proc;
-//       last = first_proc;
-//       while (p) {
-//         if(p->pid == pid) {
-//           if(p == first_proc) {
-//             /* first, but not only element */
-//             first_proc = first_proc->next;
-//             return p;
-//           } else if(p == last_proc) {
-//             /*last, but not only element */
-//             last->next = NULL;
-//             return p;
-//             break;
-//           } else {
-//             /* middle, but not only element */
-//             last->next = p->next;
-//             return p;
-//           }
-//         }
-//         last = p;
-//         p = p->next;
-//       }
-//     }
-//   }
-// }
-//
-//
-// void insert_paused(proc_t *p) {
-//   if(!p) {
-//     return;
-//   }
-//   if(!paused) {
-//     paused = p;
-//     p->next = NULL;
-//   } else {
-//     p->next = paused;
-//     paused = p;
-//   }
-// }
-//
-// proc_t* retrieve_paused(pid_t pid) {
-//   proc_t *p = paused;
-//   proc_t *last = paused;
-//   while(p) {
-//     if(p->pid == pid) {
-//       if(p == paused) {
-//         /* first, but not only element */
-//         paused = paused->next;
-//         return p;
-//       } else if(p->next == NULL) {
-//         /*last, but not only element */
-//         last->next = NULL;
-//         return p;
-//         break;
-//       } else {
-//         /* middle, but not only element */
-//         last->next = p->next;
-//         return p;
-//       }
-//     }
-//     last = p;
-//     p = p->next;
-//   }
-// }
-//
-//
-// void sigalrm_handler(int sig) {
-//   printf("Scheduler called by interrupt!\n");
-//   if(!first_proc) {
-//     /* if the process queue is empty,
-//     either no or one process is running,
-//     so don't change it */
-//     return ;
-//   } else {
-//     /* there are more processes in the queue.
-//       suspend the current process,
-//       queue it,
-//       make the first in the queue the current one,
-//       continue it*/
-//       if(!curr_proc) {
-//         /* no active process at the moment,
-//         so no need to stop it */
-//       } else {
-//         /* stop the active process and enqueue it */
-//         int k = kill(curr_proc->pid, SIGSTOP);
-//         if(k == -1) {
-//           fprintf(stderr, "Scheduler: %s\n", strerror(errno));
-//         }
-//         append_proc_queue(curr_proc);
-//       }
-//       curr_proc = pop_proc_queue();
-//       curr_proc->next = NULL;
-//       kill(curr_proc->pid, SIGCONT); /* continue the process */
-//   }
-// }
-//
-// void sigchld_handler(int sig)
-// {
-//
-//     /* find out when a child terminates and remove it from the list */
-//     pid_t p;
-//     int status;
-//     /* non blocking */
-//     while ((p=waitpid(-1, &status, WNOHANG)) != -1)
-//     {
-//        /* Handle the death of pid p */
-//        if(p == 0) {
-//          break;
-//        } else if (p > 0) {
-//          printf("Child with pid %d finished!\n", p);
-//          remove_proc(p);
-//        }
-//
-//     }
-// }
-//
-// void sched_init(void) {
-//   /* initiate process list to be empty */
-//   curr_proc   = NULL;
-//   first_proc  = NULL;
-//   last_proc   = NULL;
-//   paused      = NULL;
-//
-//   /* register handler to be called
-//   when a child process dies */
-//   signal(SIGCHLD, sigchld_handler);
-//
-//   /* register handler to be called
-//   whenever a QUANTUM is over */
-//   signal(SIGALRM, sigalrm_handler);
-//   ualarm(QUANTUM, QUANTUM);
-//
-//   }
-//
-// pid_t sched_create_process(void (*task)(void)) {
-//   if(!task) {
-//     fprintf(stderr, "No NULL task allowed!\n");
-//     exit(-1);
-//   }
-//
-//   /* create a new process */
-//   pid_t pid;
-//   pid = fork();
-//   if(pid < 0) {
-//     fprintf(stderr, "Could not create process!\n");
-//     exit(-1);
-//   } else if (pid == 0) {
-//     /* child process,
-//     the new process to execute the task
-//     the alarm interrupt is not enabeled here,
-//     so don't worry*/
-//
-//     (*task)();
-//     exit(0); /*do not return, as the process is done*/
-//   } else {
-//     /* patrent process,
-//       the process to schedule the processes */
-//
-//       kill(pid, SIGSTOP); /* suspend the new process */
-//       proc_t *new_proc = malloc(sizeof(proc_t));
-//       new_proc->pid = pid;
-//       append_proc_queue(new_proc);
-//       /* process is now enqueued and will be executed */
-//   }
-//   /* only if in parent */
-//   return pid;
-// }
-//
-// void sched_kill_process(pid_t pid) {
-//   remove_proc(pid);
-//   kill(pid, SIGKILL);
-// }
-//
-// void sched_join_process(pid_t pid) {
-//   pid_t p;
-//   int status;
-//   p = waitpid(pid, &status, 0); /* wait for child to terminate */
-//   if(p > 0) {
-//     printf("Child with pid %d finished while joining on it!\n", p);
-//   }
-//   remove_proc(pid);
-// }
-//
-// void sched_pause_process(pid_t pid) {
-//   proc_t* p;
-//   int k;
-//   if(pid>0) {
-//     if(curr_proc && curr_proc->pid == pid) {
-//       k = kill(curr_proc->pid, SIGSTOP);
-//       if(k == -1) {
-//         fprintf(stderr, "Scheduler: %s\n", strerror(errno));
-//       }
-//       p = curr_proc;
-//       curr_proc = NULL;
-//       insert_paused(p);
-//       sigalrm_handler(14);
-//     } else {
-//       k = kill(curr_proc->pid, SIGSTOP);
-//       if(k == -1) {
-//         fprintf(stderr, "Scheduler: %s\n", strerror(errno));
-//       }
-//       p = retrieve_proc_queue(pid);
-//       insert_paused(p);
-//     }
-//
-//   }
-//
-// }
-//
-// void sched_continue_process(pid_t pid) {
-//   proc_t* p;
-//   if(pid > 0) {
-//     p = retrieve_paused(pid);
-//     if(!curr_proc) {
-//       curr_proc = p;
-//       curr_proc->next = NULL;
-//       kill(curr_proc->pid, SIGCONT); /* continue the process */
-//     } else {
-//       append_proc_queue(p);
-//       /* process is now enqueued and will be executed */
-//     }
-//   }
-// }

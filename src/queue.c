@@ -31,5 +31,9 @@ proc_t* q_search_and_dequeue(queue_t* q, pid_t pid) {
   return 0;
 }
 
+int q_contains(queue_t* q, pid_t pid) {
+  
+}
+
 
 /******** PRIVATE *********/
