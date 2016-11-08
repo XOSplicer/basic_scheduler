@@ -83,7 +83,7 @@ void sched_kill_process(pid_t pid) {
     free(proc);
     kill(pid, SIGKILL);
   }
-  if(curr_proc->pid == pid) {
+  if(curr_proc && curr_proc->pid == pid) {
     free(curr_proc);
     curr_proc = NULL;
     kill(pid, SIGKILL);
@@ -102,11 +102,19 @@ void sched_join_process(pid_t pid) {
   if(pid <= 0) {
     return;
   }
-  if(curr_proc->pid != pid
-    && !q_contains(active_q, pid)
-    && !q_contains(paused_q, pid)) {
-      return;
+
+  if(curr_proc) {
+    if(curr_proc->pid != pid
+      && !q_contains(active_q, pid)
+      && !q_contains(paused_q, pid)) {
+        return;
+    }
+  } else if(!q_contains(active_q, pid)
+            && !q_contains(paused_q, pid)) {
+    return;
   }
+
+
 
   p = waitpid(pid, &status, 0); /* wait for child to terminate */
   if(p > 0) {
@@ -137,7 +145,8 @@ void sched_pause_process(pid_t pid) {
     return;
   }
 
-  if(curr_proc->pid == pid) {
+  if(curr_proc
+    && curr_proc->pid == pid) {
     kill(pid, SIGSTOP);
     q_enqueue(paused_q, curr_proc);
     curr_proc = NULL;
@@ -157,7 +166,7 @@ void sched_continue_process(pid_t pid) {
   if(pid <= 0) {
     return;
   }
-  if(curr_proc->pid == pid
+  if((curr_proc && curr_proc->pid == pid)
     || q_contains(active_q, pid)) {
       return;
   }
@@ -208,7 +217,7 @@ void sigchld_handler(int sig) {
       break;
     } else if (p > 0) {
       printf("Child with pid %d finished!\n", p);
-      if(curr_proc->pid == p) {
+      if(curr_proc && curr_proc->pid == p) {
         free(curr_proc);
         curr_proc = NULL;
       }

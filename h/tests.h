@@ -15,7 +15,7 @@
 #define TESTS_H
 
 /* time delay for counting up in microseconds */
-#define COUNT_DELAY 3000UL  /* 3 milliseconds*/
+#define COUNT_DELAY 2000UL  /* 2 milliseconds*/
 
 /* how many tests are there */
 #define TESTS_NUMBER 4
